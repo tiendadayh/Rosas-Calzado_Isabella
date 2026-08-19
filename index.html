@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique & Detalles Isabella - Catálogo</title>
+    <style>
+        :root {
+            --primary: #e11d48;
+            --primary-dark: #be123c;
+            --primary-light: #ffe4e6;
+            --accent: #9333ea;
+            --danger: #f43f5e;
+            --whatsapp: #25d366;
+            --bg: #fff1f2;
+            --card-bg: #ffffff;
+            --text: #331832;
+            --text-muted: #886588;
+            --border: #fecdd3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+        nav {
+            background: linear-gradient(135deg, #2e0827 0%, #1e051a 100%);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 24px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(46, 8, 39, 0.15); border-bottom: 2px solid var(--primary);
+        }
+
+        .brand-container { display: flex; align-items: center; gap: 15px; }
+        .store-logo { height: 70px; width: 200px; object-fit: contain; border-radius: 12px; }
+        .brand-title {
+            color: #fff; font-size: 1.4rem; font-weight: 800;
+            background: linear-gradient(45deg, #f472b6, #fb7185);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .cart-trigger {
+            background-color: var(--whatsapp); color: white; border: none;
+            padding: 9px 18px; border-radius: 20px; font-weight: 700; cursor: pointer;
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+            transition: transform 0.2s ease;
+        }
+        .cart-trigger:hover { transform: scale(1.03); }
+        .cart-badge { background-color: var(--danger); color: white; border-radius: 50%; padding: 2px 7px; font-size: 0.75rem; }
+
+        .container { max-width: 1100px; margin: 25px auto; padding: 0 20px; }
+
+        .banner-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .info-card-banner {
+            background: linear-gradient(135deg, #be123c 0%, #7e22ce 100%);
+            border-radius: 16px; padding: 20px; color: white; box-shadow: 0 6px 18px rgba(190, 18, 60, 0.2);
+        }
+        .info-card-banner.rose-bg { background: linear-gradient(135deg, #db2777 0%, #9333ea 100%); }
+        .info-card-banner h3 { font-size: 1.2rem; margin-bottom: 8px; }
+        .info-card-banner p { font-size: 0.9rem; opacity: 0.95; line-height: 1.4; }
+
+        .countdown-box {
+            display: flex; gap: 8px; margin-top: 10px; background: rgba(0,0,0,0.25);
+            padding: 8px 12px; border-radius: 10px; width: fit-content; font-weight: bold; font-size: 0.9rem;
+        }
+        .timer-unit { background: rgba(255,255,255,0.2); padding: 3px 6px; border-radius: 4px; }
+
+        .type-pills-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; }
+        .pill-btn {
+            background: white; border: 1px solid var(--border); color: var(--text-muted);
+            padding: 8px 18px; border-radius: 25px; font-weight: 700; font-size: 0.85rem; cursor: pointer;
+            white-space: nowrap; transition: all 0.2s ease;
+        }
+        .pill-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .filter-card {
+            background: var(--card-bg); padding: 18px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(225, 29, 72, 0.06); margin-bottom: 25px;
+            border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; align-items: center;
+        }
+        .range-container { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        input, select {
+            width: 100%; padding: 10px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 0.9rem; outline: none; background-color: #fffafb;
+        }
+        input:focus, select:focus { border-color: var(--primary); }
+
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 22px; }
+        .product-card {
+            background: var(--card-bg); border-radius: 16px; overflow: hidden;
+            box-shadow: 0 6px 18px rgba(225, 29, 72, 0.07); display: flex; flex-direction: column;
+            position: relative; border: 1px solid var(--border);
+        }
+
+        .img-wrapper { width: 100%; height: 220px; overflow: hidden; position: relative; background: var(--primary-light); }
+        .product-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        .badges-container { position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+        .badge-style { color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .category-badge { background: linear-gradient(135deg, #2e0827 0%, #a21caf 100%); }
+        .tag-badge { background: linear-gradient(135deg, #9333ea 0%, #c084fc 100%); }
+
+        .product-info { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+        .product-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+        .price-box { display: flex; align-items: baseline; gap: 8px; }
+        .product-price { font-size: 1.3rem; color: var(--primary-dark); font-weight: 800; }
+        .old-price { font-size: 0.9rem; color: var(--text-muted); text-decoration: line-through; }
+
+        .custom-inputs-box { background: #fff0f3; padding: 10px; border-radius: 10px; border: 1px solid var(--border); margin-top: 5px; }
+
+        .btn-add-cart {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white; border: none; padding: 11px; border-radius: 10px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 6px;
+        }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(46, 8, 39, 0.6); backdrop-filter: blur(4px); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white; width: 92%; max-width: 520px; border-radius: 20px; padding: 22px;
+            max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .cart-items-list { margin: 10px 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 300px; }
+        .cart-item { display: flex; align-items: center; gap: 10px; background: #fff0f3; padding: 10px; border-radius: 12px; border: 1px solid var(--border); }
+        .cart-item-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+        .cart-item-details { flex-grow: 1; }
+        .cart-item-title { font-weight: 700; font-size: 0.9rem; }
+        .cart-item-sub { font-size: 0.8rem; color: var(--text-muted); }
+
+        .btn-whatsapp-checkout {
+            background-color: var(--whatsapp); color: white; border: none; padding: 13px;
+            border-radius: 12px; font-weight: 800; text-align: center; display: block; margin-top: 10px;
+            width: 100%; cursor: pointer; font-size: 1rem;
+        }
+
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: #2e0827; color: white; padding: 12px 18px; border-radius: 10px; font-weight: 600; border-left: 4px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="brand-container">
+            <img src="logo.jpg" alt="Logo Tienda" class="store-logo" id="store-logo-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x70.jpg?text=ISABELLA+BOUTIQUE';">
+            <span class="brand-title">Rosas & Calzado Isabella</span>
+        </div>
+
+        <button class="cart-trigger" onclick="toggleCartModal()">
+            🛒 Carrito <span class="cart-badge" id="cart-count">0</span>
+        </button>
+    </nav>
+
+    <div class="container">
+
+        <div class="banner-grid">
+            <div class="info-card-banner">
+                <h3>👠 Calzado Bajo Pedido</h3>
+                <p>Entregas en aprox. 15 días tras el día de cierre.</p>
+                <div class="countdown-box" id="countdown-display">
+                    <span>⏳ Cierre en:</span>
+                    <span class="timer-unit" id="timer-days">00d</span>
+                    <span class="timer-unit" id="timer-hours">00h</span>
+                    <span class="timer-unit" id="timer-mins">00m</span>
+                </div>
+            </div>
+
+            <div class="info-card-banner rose-bg">
+                <h3>🌹 Rosas Eternas Isabella</h3>
+                <p>Ramos hechos a mano con listón y limpiapipas.</p>
+                <div style="margin-top:8px; font-weight:bold; font-size:0.85rem;">⏰ Pedir con 5 días de anticipación</div>
+            </div>
+        </div>
+
+        <div class="type-pills-container">
+            <button class="pill-btn active" onclick="filterType('Todos', this)">✨ Todos</button>
+            <button class="pill-btn" onclick="filterType('Rosas Eternas', this)">🌹 Rosas Eternas</button>
+            <button class="pill-btn" onclick="filterType('Tacones', this)">👠 Tacones</button>
+            <button class="pill-btn" onclick="filterType('Sandalias', this)">👡 Sandalias</button>
+            <button class="pill-btn" onclick="filterType('Plataformas', this)">🥿 Plataformas</button>
+            <button class="pill-btn" onclick="filterType('Zapatillas', this)">👟 Zapatillas</button>
+            <button class="pill-btn" onclick="filterType('Botines', this)">👢 Botines</button>
+        </div>
+
+        <div class="filter-card">
+            <div class="form-group">
+                <label>🔍 Buscar Producto</label>
+                <input type="text" id="client-search" placeholder="Nombre o modelo..." oninput="renderClientView()">
+            </div>
+            <div class="range-container">
+                <label>💰 Precio Máximo: <b id="price-limit-val">$1500</b></label>
+                <input type="range" id="price-range" min="100" max="2000" step="50" value="1500" oninput="updatePriceRange(this.value)">
+            </div>
+        </div>
+
+        <div class="products-grid" id="client-products"></div>
+
+    </div>
+
+    <!-- MODAL CARRITO -->
+    <div class="modal" id="cart-modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px;">
+                <h2>🛒 Tu Pedido Isabella</h2>
+                <button onclick="toggleCartModal()" style="border:none; background:none; cursor:pointer; font-size:1.2rem;">✖</button>
+            </div>
+
+            <div class="cart-items-list" id="cart-items"></div>
+            
+            <div style="margin-top:10px; background:#fff0f3; padding:12px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
+                <div>
+                    <label style="display:block; margin-bottom:3px;">👤 Nombre Completo:</label>
+                    <input type="text" id="client-name" placeholder="Ej. Maria López" required style="background:white;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:3px;">📱 Teléfono (WhatsApp - 10 dígitos):</label>
+                    <input type="tel" id="client-phone" placeholder="Ej. 7441234567" required style="background:white;">
+                </div>
+            </div>
+
+            <div style="font-size:1.2rem; font-weight:800; text-align:right; margin-top:10px;" id="cart-total">Total: $0.00</div>
+            
+            <button id="checkout-btn" class="btn-whatsapp-checkout" onclick="submitOrder()">
+                📱 Confirmar Pedido por WhatsApp
+            </button>
+            
+            <button onclick="toggleCartModal()" style="margin-top:8px; border:none; background:none; cursor:pointer; color:var(--text-muted); width:100%;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2AnEC5HlviIrrjOSvHUGzAnd-8l6aIRw",
+            authDomain: "mitiendacalzado-14ea9.firebaseapp.com",
+            projectId: "mitiendacalzado-14ea9",
+            storageBucket: "mitiendacalzado-14ea9.firebasestorage.app",
+            messagingSenderId: "463670190117",
+            appId: "1:463670190117:web:3519739b92c513661f5fcc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const productsCol = collection(db, "productos");
+        const ordersCol = collection(db, "pedidos");
+
+        const TELEFONO_WHATSAPP = "527441291799";
+
+        let products = [];
+        let cart = JSON.parse(localStorage.getItem('zapateria_cart_cloud')) || [];
+        let selectedTypeFilter = 'Todos';
+        let maxPriceFilter = 1500;
+        let currentClosingDate = "2026-12-31";
+
+        window.showToast = function(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        onSnapshot(productsCol, (snapshot) => {
+            products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderClientView();
+        });
+
+        // Escuchar cambios de fecha de cierre en tiempo real desde Firestore
+        onSnapshot(doc(db, "config", "settings"), (snap) => {
+            if (snap.exists() && snap.data().closingDate) {
+                currentClosingDate = snap.data().closingDate;
+            }
+        });
+
+        setInterval(() => {
+            const display = document.getElementById('countdown-display');
+            if (!display) return;
+
+            const target = new Date(currentClosingDate + "T23:59:59").getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+
+            if (diff > 0) {
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+                display.innerHTML = `
+                    <span>⏳ Cierre en:</span>
+                    <span class="timer-unit">${d}d</span>
+                    <span class="timer-unit">${h}h</span>
+                    <span class="timer-unit">${m}m</span>
+                `;
+            } else {
+                display.innerHTML = '<span>⛔ Pedidos Cerrados</span>';
+            }
+        }, 1000);
+
+        window.updatePriceRange = function(val) {
+            maxPriceFilter = parseFloat(val);
+            document.getElementById('price-limit-val').innerText = `$${val}`;
+            renderClientView();
+        };
+
+        window.filterType = function(type, element) {
+            selectedTypeFilter = type;
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            element.classList.add('active');
+            renderClientView();
+        };
+
+        window.addToCartCustom = function(id) {
+            const prod = products.find(p => p.id === id);
+            let talla = "N/A";
+            let nota = "";
+
+            if (prod.shoeType === 'Rosas Eternas') {
+                nota = document.getElementById(`note-${id}`)?.value || "Sin dedicatoria";
+            } else {
+                talla = document.getElementById(`size-${id}`)?.value || "24 MX";
+            }
+
+            cart.push({
+                id: prod.id,
+                cartItemId: Date.now(),
+                name: prod.name,
+                price: prod.price,
+                image: prod.image,
+                shoeType: prod.shoeType,
+                talla: talla,
+                nota: nota,
+                qty: 1
+            });
+
+            localStorage.setItem('zapateria_cart_cloud', JSON.stringify(cart));
+            updateCartBadge();
+            showToast(`🛒 ${prod.name} añadido al carrito`);
+        };
+
+        function updateCartBadge() {
+            document.getElementById('cart-count').innerText = cart.reduce((a, b) => a + b.qty, 0);
+        }
+
+        window.toggleCartModal = function() {
+            const modal = document.getElementById('cart-modal');
+            modal.classList.toggle('active');
+            if (modal.classList.contains('active')) renderCartModal();
+        };
+
+        function renderCartModal() {
+            const list = document.getElementById('cart-items');
+            list.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align:center; padding:20px;">Tu carrito está vacío 🛒</p>';
+                document.getElementById('checkout-btn').style.display = 'none';
+                document.getElementById('cart-total').innerText = 'Total: $0.00';
+                return;
+            }
+
+            document.getElementById('checkout-btn').style.display = 'block';
+
+            cart.forEach((item, index) => {
+                const sub = item.price * item.qty;
+                total += sub;
+                const spec = item.shoeType === 'Rosas Eternas' ? `💌 Nota: "${item.nota}"` : `👠 Talla: ${item.talla}`;
+
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.image}" class="cart-item-img">
+                        <div class="cart-item-details">
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-sub">${spec}</div>
+                            <div style="font-weight:bold; color:var(--primary-dark);">$${item.price}</div>
+                        </div>
+                        <button onclick="removeCartItem(${index})" style="border:none; background:none; cursor:pointer;">❌</button>
+                    </div>
+                `;
+            });
+
+            document.getElementById('cart-total').innerText = `Total: $${total.toFixed(2)}`;
+        }
+
+        window.submitOrder = async function() {
+            const clientNameInput = document.getElementById('client-name').value.trim();
+            const clientPhoneInput = document.getElementById('client-phone').value.trim();
+
+            if (!clientNameInput || !clientPhoneInput) {
+                alert("Por favor ingresa tu Nombre y Teléfono antes de confirmar.");
+                return;
+            }
+
+            let total = 0;
+            let msg = `¡Hola Isabella! Mi nombre es *${clientNameInput}* y quisiera hacer el siguiente pedido:\n\n`;
+
+            cart.forEach(item => {
+                const sub = item.price * item.qty;
+                total += sub;
+                const spec = item.shoeType === 'Rosas Eternas' ? `💌 Nota: "${item.nota}"` : `👠 Talla: ${item.talla}`;
+                msg += `• *${item.name}* (${spec}) x${item.qty} - $${sub.toFixed(2)}\n`;
+            });
+
+            msg += `\n💵 *Total: $${total.toFixed(2)}*`;
+
+            const orderPayload = {
+                clientName: clientNameInput,
+                clientPhone: clientPhoneInput,
+                items: cart,
+                total: total.toFixed(2),
+                status: 'Pendiente',
+                createdAt: new Date().toLocaleString("es-MX")
+            };
+
+            try {
+                await addDoc(ordersCol, orderPayload);
+
+                cart = [];
+                localStorage.setItem('zapateria_cart_cloud', JSON.stringify(cart));
+                updateCartBadge();
+                toggleCartModal();
+
+                window.open(`https://wa.me/${TELEFONO_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+            } catch (error) {
+                console.error("Error guardando el pedido:", error);
+                alert("Hubo un detalle al enviar tu pedido, intenta nuevamente.");
+            }
+        };
+
+        window.removeCartItem = function(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('zapateria_cart_cloud', JSON.stringify(cart));
+            updateCartBadge();
+            renderCartModal();
+        };
+
+        window.renderClientView = function() {
+            const container = document.getElementById('client-products');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const search = document.getElementById('client-search').value.toLowerCase();
+
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search);
+                const matchesType = selectedTypeFilter === 'Todos' || p.shoeType === selectedTypeFilter;
+                const matchesPrice = parseFloat(p.price) <= maxPriceFilter;
+                return matchesSearch && matchesType && matchesPrice;
+            });
+
+            filtered.forEach(p => {
+                const isRose = p.shoeType === 'Rosas Eternas';
+
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div class="badges-container">
+                            <span class="badge-style category-badge">${isRose ? '🌹 ROSAS' : '👠 CALZADO'}</span>
+                            ${p.specialTag !== 'Sin Etiqueta' ? `<span class="badge-style tag-badge">${p.specialTag}</span>` : ''}
+                        </div>
+                        <div class="img-wrapper"><img src="${p.image}"></div>
+                        <div class="product-info">
+                            <div>
+                                <div class="product-title">${p.name}</div>
+                                <div class="price-box">
+                                    <span class="product-price">$${p.price}</span>
+                                    ${p.oldPrice ? `<span class="old-price">$${p.oldPrice}</span>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="custom-inputs-box">
+                                ${isRose ? `
+                                    <label>💌 Dedicatoria (Tarjeta):</label>
+                                    <input type="text" id="note-${p.id}" placeholder="Ej. ¡Te amo Mamá!">
+                                ` : `
+                                    <label>👠 Talla exacta:</label>
+                                    <select id="size-${p.id}">
+                                        <option value="22 MX">22 MX</option>
+                                        <option value="23 MX">23 MX</option>
+                                        <option value="24 MX" selected>24 MX</option>
+                                        <option value="25 MX">25 MX</option>
+                                        <option value="26 MX">26 MX</option>
+                                    </select>
+                                `}
+                            </div>
+
+                            <button class="btn-add-cart" onclick="addToCartCustom('${p.id}')">🛒 Agregar al Carrito</button>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        updateCartBadge();
+    </script>
+</body>
+</html>

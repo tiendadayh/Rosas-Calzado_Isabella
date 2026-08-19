@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique Isabella - Panel Admin</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #e11d48;
+            --primary-dark: #be123c;
+            --primary-light: #ffe4e6;
+            --accent: #9333ea;
+            --danger: #f43f5e;
+            --success: #10b981;
+            --whatsapp: #25d366;
+            --shipping: #0284c7;
+            --bg: #fff1f2;
+            --card-bg: #ffffff;
+            --text: #331832;
+            --text-muted: #886588;
+            --border: #fecdd3;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding-bottom: 40px; }
+
+        nav {
+            background: linear-gradient(135deg, #2e0827 0%, #1e051a 100%);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 24px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(46, 8, 39, 0.15); border-bottom: 2px solid var(--primary);
+        }
+
+        .brand-title {
+            color: #fff; font-size: 1.4rem; font-weight: 800;
+            background: linear-gradient(45deg, #f472b6, #fb7185);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        #new-order-alert-banner {
+            display: none;
+            background: linear-gradient(135deg, #e11d48 0%, #9333ea 100%);
+            color: white; padding: 16px 20px; margin: 15px auto 0 auto;
+            max-width: 1100px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(225, 29, 72, 0.3);
+            animation: pulse-alert 1.5s infinite alternate;
+        }
+        @keyframes pulse-alert {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+        .alert-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+
+        #auth-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(46, 8, 39, 0.95); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-card {
+            background: white; padding: 32px; border-radius: 20px;
+            width: 100%; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center;
+        }
+        .login-card h2 { margin-bottom: 8px; color: var(--primary-dark); }
+        .login-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+        .login-card input {
+            width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 0.95rem; background: #fffafb; outline: none;
+        }
+
+        .container { max-width: 1100px; margin: 25px auto; padding: 0 20px; }
+
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .admin-tab-btn {
+            background: white; border: 1px solid var(--border); color: var(--text-muted);
+            padding: 10px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+        }
+        .admin-tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .metric-card {
+            background: var(--card-bg); padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(225, 29, 72, 0.05); border-left: 5px solid var(--primary);
+        }
+        .metric-card.success { border-left-color: var(--success); }
+        .metric-card.accent { border-left-color: var(--accent); }
+        .metric-title { font-size: 0.85rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .metric-value { font-size: 1.7rem; font-weight: 800; color: var(--text); }
+
+        .form-card {
+            background: var(--card-bg); padding: 22px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(225, 29, 72, 0.06); margin-bottom: 25px; border: 1px solid var(--border);
+        }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full { grid-column: 1 / -1; }
+
+        label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+        input, select {
+            width: 100%; padding: 10px; border: 1px solid var(--border);
+            border-radius: 10px; font-size: 0.9rem; outline: none; background-color: #fffafb;
+        }
+
+        button.btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white; border: none; padding: 12px 18px; border-radius: 10px; font-weight: 700; cursor: pointer;
+        }
+
+        .btn-pdf {
+            background-color: #ef4444; color: white; border: none;
+            padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem;
+        }
+
+        .orders-grid { display: flex; flex-direction: column; gap: 18px; }
+        .order-card {
+            background: white; border-radius: 16px; border: 1px solid var(--border);
+            padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); position: relative;
+        }
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border); padding-bottom: 10px; margin-bottom: 12px; }
+        .order-date { font-size: 0.85rem; color: var(--text-muted); }
+        .order-items-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .order-item-row { display: flex; align-items: center; justify-content: space-between; background: #fff0f3; padding: 8px 12px; border-radius: 10px; }
+        .order-item-detail { display: flex; align-items: center; gap: 10px; }
+        .order-item-img { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; }
+        .order-total-box { font-size: 1.1rem; font-weight: 800; text-align: right; color: var(--primary-dark); }
+
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .product-card {
+            background: var(--card-bg); border-radius: 16px; overflow: hidden;
+            box-shadow: 0 6px 18px rgba(225, 29, 72, 0.07); display: flex; flex-direction: column; border: 1px solid var(--border);
+        }
+        .img-wrapper { width: 100%; height: 180px; overflow: hidden; position: relative; background: var(--primary-light); }
+        .product-card img { width: 100%; height: 100%; object-fit: cover; }
+        .product-info { padding: 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+
+        .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-action { flex: 1; padding: 9px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.8rem; }
+        .btn-edit { background-color: #f59e0b; color: white; }
+        .btn-delete { background-color: var(--danger); color: white; }
+        .btn-whatsapp-accept { background-color: var(--whatsapp); color: white; }
+        .btn-whatsapp-ship { background-color: var(--shipping); color: white; }
+
+        .status-pill { padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 800; }
+        .status-pendiente { background: #fef08a; color: #854d0e; }
+        .status-confirmado { background: #bbf7d0; color: #166534; }
+        .status-enviado { background: #bae6fd; color: #0369a1; }
+
+        .tab-section { display: none; }
+        .tab-section.active { display: block; }
+
+        .sound-banner {
+            background: #fef3c7; border: 1px solid #f59e0b; color: #78350f;
+            padding: 10px 16px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+        .toast { background: #2e0827; color: white; padding: 12px 18px; border-radius: 10px; font-weight: 600; border-left: 4px solid var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div class="login-card">
+            <h2>🔒 Acceso Admin</h2>
+            <p>Ingresa tu correo y contraseña registrados en Firebase</p>
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="admin@isabella.com" required>
+                <input type="password" id="login-pass" placeholder="••••••••" required>
+                <button type="submit" class="btn-primary" style="width:100%; margin-top:5px;">Iniciar Sesión</button>
+            </form>
+        </div>
+    </div>
+
+    <nav>
+        <div class="brand-container">
+            <span class="brand-title">⚙️ Panel de Control Isabella</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+            <button id="logout-btn" onclick="logoutAdmin()" style="background:#f43f5e; color:white; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer; display:none;">Cerrar Sesión</button>
+        </div>
+    </nav>
+
+    <div id="new-order-alert-banner">
+        <div class="alert-content">
+            <div style="font-size: 1.1rem; font-weight: 800;">
+                🚨 ¡PEDIDO NUEVO REGISTRADO!
+                <div id="new-order-client-name" style="font-size: 0.95rem; font-weight: 600; margin-top: 3px;">
+                    Cliente: ---
+                </div>
+            </div>
+            <button onclick="dismissOrderAlert()" style="background: white; color: var(--primary); border: none; padding: 8px 16px; border-radius: 8px; font-weight: 800; cursor: pointer;">
+                Ver Pedidos 📋
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="sound-banner" id="sound-banner">
+            <span>🔊 Haz clic aquí para activar las alertas de voz para nuevos pedidos.</span>
+            <button onclick="enableAudioPermission()" style="background:#f59e0b; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">Activar Audio y Voz</button>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card accent">
+                <span class="metric-title">Pedidos Recibidos</span>
+                <span class="metric-value" id="total-orders-count">0</span>
+            </div>
+            <div class="metric-card success">
+                <span class="metric-title">Ventas Registradas</span>
+                <span class="metric-value" id="total-revenue">$0.00</span>
+            </div>
+            <div class="metric-card">
+                <span class="metric-title">Total Productos</span>
+                <span class="metric-value" id="stock-count">0</span>
+            </div>
+        </div>
+
+        <div class="admin-nav">
+            <button class="admin-tab-btn active" id="tab-btn-pedidos" onclick="switchAdminTab('pedidos', this)">📋 Pedidos Recibidos</button>
+            <button class="admin-tab-btn" onclick="switchAdminTab('productos', this)">📦 Gestión de Productos</button>
+            <button class="admin-tab-btn" onclick="switchAdminTab('config', this)">📅 Fecha de Cierre</button>
+        </div>
+
+        <section id="section-pedidos" class="tab-section active">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <h2>📥 Pedidos Registrados</h2>
+                <button class="btn-pdf" onclick="exportOrdersPDF()">📄 Descargar PDF de Pedidos</button>
+            </div>
+            <div class="orders-grid" id="orders-container">
+                <p style="text-align:center; padding:20px;">Cargando pedidos...</p>
+            </div>
+        </section>
+
+        <section id="section-productos" class="tab-section">
+            <div class="form-card">
+                <h2 id="form-title">Registrar Nuevo Producto</h2>
+                <form id="product-form">
+                    <input type="hidden" id="edit-id" value="">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre del Producto</label>
+                            <input type="text" id="name" required placeholder="Ej. Tacón Lola">
+                        </div>
+                        <div class="form-group">
+                            <label>Categoría / Tipo</label>
+                            <select id="shoeType">
+                                <option value="Rosas Eternas">🌹 Rosas Eternas</option>
+                                <option value="Tacones">👠 Tacones</option>
+                                <option value="Sandalias">👡 Sandalias</option>
+                                <option value="Plataformas">🥿 Plataformas</option>
+                                <option value="Zapatillas">👟 Zapatillas</option>
+                                <option value="Botines">👢 Botines</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Etiqueta Especial</label>
+                            <select id="specialTag">
+                                <option value="Sin Etiqueta">Sin Etiqueta</option>
+                                <option value="✨ NUEVO">✨ NUEVO</option>
+                                <option value="🔥 MÁS VENDIDO">🔥 MÁS VENDIDO</option>
+                                <option value="👑 EXCLUSIVO">👑 EXCLUSIVO</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio ($)</label>
+                            <input type="number" id="price" step="0.01" required placeholder="350.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Anterior (Oferta)</label>
+                            <input type="number" id="oldPrice" step="0.01" placeholder="450.00">
+                        </div>
+                        <div class="form-group full">
+                            <label>Foto del Producto</label>
+                            <input type="file" id="image" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn-primary" id="btn-save" style="grid-column: 1 / -1;">✨ Guardar Producto</button>
+                        <button type="button" id="btn-cancel-edit" onclick="cancelEdit()" style="display:none; background: var(--text-muted); color:white; border:none; padding:10px; border-radius:10px; cursor:pointer; grid-column: 1 / -1;">❌ Cancelar Edición</button>
+                    </div>
+                </form>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">
+                <h2>Inventario Activo</h2>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="admin-search" placeholder="🔍 Buscar..." oninput="renderAdminProducts()" style="width:200px;">
+                    <button class="btn-pdf" onclick="exportInventoryPDF()">📄 Exportar Inventario PDF</button>
+                </div>
+            </div>
+
+            <div class="products-grid" id="admin-products"></div>
+        </section>
+
+        <section id="section-config" class="tab-section">
+            <div class="form-card" style="border-left: 5px solid var(--accent);">
+                <h2>📅 Configurar Fecha de Cierre de Pedidos</h2>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-top:5px;">Esta fecha actualizará automáticamente el reloj regresivo en la página del cliente.</p>
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <input type="date" id="closing-date-input">
+                    <button type="button" class="btn-primary" onclick="saveClosingDate()">Actualizar Fecha</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2AnEC5HlviIrrjOSvHUGzAnd-8l6aIRw",
+            authDomain: "mitiendacalzado-14ea9.firebaseapp.com",
+            projectId: "mitiendacalzado-14ea9",
+            storageBucket: "mitiendacalzado-14ea9.firebasestorage.app",
+            messagingSenderId: "463670190117",
+            appId: "1:463670190117:web:3519739b92c513661f5fcc"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const productsCol = collection(db, "productos");
+        const ordersCol = collection(db, "pedidos");
+
+        let products = [];
+        let orders = [];
+        let isFirstLoad = true;
+        let audioContext = null;
+
+        window.enableAudioPermission = function() {
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === 'suspended') audioContext.resume();
+            document.getElementById('sound-banner').style.display = 'none';
+            playNotificationSound("Prueba");
+            showToast("🔊 Alerta de sonido y voz activada");
+        };
+
+        function playNotificationSound(clientName = "Cliente") {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioContext.currentTime);
+                osc.frequency.setValueAtTime(880, audioContext.currentTime + 0.15);
+
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.6);
+
+                if ('speechSynthesis' in window) {
+                    setTimeout(() => {
+                        const textToSpeak = `Pedido nuevo de ${clientName}`;
+                        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                        utterance.lang = 'es-MX';
+                        utterance.rate = 0.95;
+                        utterance.pitch = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                    }, 400);
+                }
+            } catch (e) {
+                console.log("Error de audio:", e);
+            }
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                alert("Error de inicio de sesión: " + error.message);
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('logout-btn').style.display = 'inline-block';
+                initAdmin();
+            } else {
+                document.getElementById('auth-screen').style.display = 'flex';
+                document.getElementById('logout-btn').style.display = 'none';
+            }
+        });
+
+        window.logoutAdmin = function() { signOut(auth); };
+
+        window.showToast = function(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        };
+
+        window.switchAdminTab = function(tabName, element) {
+            document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+            if (element) element.classList.add('active');
+            document.getElementById(`section-${tabName}`).classList.add('active');
+        };
+
+        window.dismissOrderAlert = function() {
+            document.getElementById('new-order-alert-banner').style.display = 'none';
+            const tabBtn = document.getElementById('tab-btn-pedidos');
+            window.switchAdminTab('pedidos', tabBtn);
+        };
+
+        function initAdmin() {
+            onSnapshot(productsCol, (snapshot) => {
+                products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.renderAdminProducts();
+            });
+
+            onSnapshot(ordersCol, (snapshot) => {
+                const previousCount = orders.length;
+                orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                if (!isFirstLoad && orders.length > previousCount) {
+                    const latestOrder = orders[orders.length - 1] || orders[0];
+                    const clientName = latestOrder.clientName || 'Cliente Anónimo';
+
+                    document.getElementById('new-order-client-name').innerText = `Cliente: 👤 ${clientName}`;
+                    document.getElementById('new-order-alert-banner').style.display = 'block';
+
+                    playNotificationSound(clientName);
+                    showToast(`🚨 ¡Pedido nuevo de: ${clientName}!`);
+                }
+                
+                isFirstLoad = false;
+                renderOrdersView();
+            });
+
+            loadClosingDateSetting();
+        }
+
+        function renderOrdersView() {
+            const container = document.getElementById('orders-container');
+            document.getElementById('total-orders-count').innerText = orders.length;
+
+            let calculatedRevenue = 0;
+
+            if (orders.length === 0) {
+                container.innerHTML = `<div class="form-card" style="text-align:center;">
+                    <h3>No hay pedidos registrados aún 🛍️</h3>
+                </div>`;
+                document.getElementById('total-revenue').innerText = "$0.00";
+                return;
+            }
+
+            container.innerHTML = '';
+
+            orders.forEach(order => {
+                calculatedRevenue += parseFloat(order.total || 0);
+                
+                let statusClass = 'status-pendiente';
+                if (order.status === 'Confirmado') statusClass = 'status-confirmado';
+                if (order.status === 'Enviado') statusClass = 'status-enviado';
+                
+                const statusText = order.status || 'Pendiente';
+
+                let itemsHTML = '';
+                if (order.items && Array.isArray(order.items)) {
+                    order.items.forEach(item => {
+                        const subtotal = (parseFloat(item.price) * item.qty).toFixed(2);
+                        const spec = item.shoeType === 'Rosas Eternas' ? `💌 Dedicatoria: "${item.nota}"` : `👠 Talla: ${item.talla}`;
+
+                        itemsHTML += `
+                            <div class="order-item-row">
+                                <div class="order-item-detail">
+                                    <img src="${item.image}" class="order-item-img">
+                                    <div>
+                                        <div style="font-weight:700;">${item.name} (x${item.qty})</div>
+                                        <div style="font-size:0.8rem; color:var(--text-muted);">${spec}</div>
+                                    </div>
+                                </div>
+                                <div style="font-weight:700;">Subtotal: $${subtotal}</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                container.innerHTML += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span style="font-size:1.1rem; font-weight:800; color:var(--primary);">👤 ${order.clientName || 'Cliente Anónimo'}</span>
+                                    <span class="status-pill ${statusClass}">${statusText}</span>
+                                </div>
+                                <div style="font-size:0.8rem; color:var(--text-muted);">📱 Tel: ${order.clientPhone || 'No proporcionado'} | ID: #${order.id.slice(0, 6)}</div>
+                            </div>
+                            <span class="order-date">📅 ${order.createdAt || 'Reciente'}</span>
+                        </div>
+                        
+                        <div class="order-items-list">${itemsHTML}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div class="actions" style="margin:0;">
+                                <button class="btn-action btn-whatsapp-accept" onclick="acceptOrderWhatsApp('${order.id}')">
+                                    ✅ Confirmar Pedido
+                                </button>
+                                <button class="btn-action btn-whatsapp-ship" onclick="notifyShippingWhatsApp('${order.id}')">
+                                    🚀 Notificar Envío por WhatsApp
+                                </button>
+                                <button class="btn-action btn-delete" onclick="window.deleteOrder('${order.id}')">
+                                    🗑️ Eliminar
+                                </button>
+                            </div>
+                            <div class="order-total-box">Total: $${parseFloat(order.total || 0).toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('total-revenue').innerText = `$${calculatedRevenue.toFixed(2)}`;
+        }
+
+        window.acceptOrderWhatsApp = async function(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            await updateDoc(doc(db, "pedidos", orderId), { status: "Confirmado" });
+
+            let rawPhone = (order.clientPhone || '').replace(/\D/g, '');
+            if (rawPhone.length === 10) rawPhone = '52' + rawPhone;
+
+            let msg = `✨ *¡Hola ${order.clientName}!* ✨\n\n`;
+            msg += `Te confirmamos que tu pedido ha sido *CONFIRMADO* en *Boutique & Detalles Isabella* 🛍️🌹.\n\n`;
+            msg += `📋 *Resumen:*\n`;
+
+            order.items.forEach(item => {
+                const spec = item.shoeType === 'Rosas Eternas' ? `💌 Nota: "${item.nota}"` : `👠 Talla: ${item.talla}`;
+                msg += `• *${item.name}* (${spec}) x${item.qty}\n`;
+            });
+
+            msg += `\n💵 *Total: $${order.total}*\n\n`;
+            msg += `Ya lo estamos preparando con mucho cariño. Te avisaremos en cuanto salga a camino. 💕`;
+
+            if (rawPhone) {
+                window.open(`https://wa.me/${rawPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                alert("El cliente no proporcionó un número telefónico válido.");
+            }
+            showToast("✅ Pedido Aceptado");
+        };
+
+        window.notifyShippingWhatsApp = async function(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
+
+            await updateDoc(doc(db, "pedidos", orderId), { 
+                status: "Enviado"
+            });
+
+            let rawPhone = (order.clientPhone || '').replace(/\D/g, '');
+            if (rawPhone.length === 10) rawPhone = '52' + rawPhone;
+
+            let msg = `🚚 *¡TU PEDIDO VA EN CAMINO!* 📦✨\n\n`;
+            msg += `Hola *${order.clientName}*, ¡excelentes noticias! Tu pedido de *Boutique Isabella* ya ha sido despachado.\n\n`;
+            msg += `\n¡Esperamos que disfrutes mucho tus productos! Muchas gracias por tu preferencia. 💕✨`;
+
+            if (rawPhone) {
+                window.open(`https://wa.me/${rawPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                alert("El cliente no proporcionó número de teléfono válido.");
+            }
+            showToast("🚀 Notificación de envío mandada");
+        };
+
+        window.exportInventoryPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+
+            docPdf.setFont("helvetica", "bold");
+            docPdf.setFontSize(20);
+            docPdf.setTextColor(225, 29, 72);
+            docPdf.text("Reporte de Inventario Activo", 14, 18);
+
+            docPdf.setFontSize(14);
+            docPdf.setTextColor(51, 24, 50);
+            docPdf.text("Boutique & Detalles Isabella", 14, 25);
+
+            docPdf.setFont("helvetica", "normal");
+            docPdf.setFontSize(10);
+            docPdf.setTextColor(136, 101, 136);
+            docPdf.text("Catálogo Completo de Productos", 14, 31);
+
+            const tableData = products.map(p => {
+                const deliveryMode = p.shoeType === 'Rosas Eternas' ? '5 días anticipación' : 'Bajo Pedido';
+                const oldP = p.oldPrice ? `$${parseFloat(p.oldPrice).toFixed(2)}` : '';
+                return [
+                    p.name || '',
+                    p.shoeType || '',
+                    p.specialTag || 'Sin etiqueta',
+                    `$${parseFloat(p.price || 0).toFixed(2)}`,
+                    oldP,
+                    deliveryMode
+                ];
+            });
+
+            docPdf.autoTable({
+                startY: 37,
+                head: [['Nombre del Producto', 'Categoría', 'Etiqueta', 'Precio Actual', 'Precio Anterior', 'Modalidad Entrega']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: {
+                    fillColor: [225, 29, 72],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'left'
+                },
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 4,
+                    textColor: [51, 24, 50]
+                },
+                alternateRowStyles: {
+                    fillColor: [255, 241, 242]
+                },
+                didDrawPage: function (data) {
+                    const str = "Boutique & Detalles Isabella - Control de Inventario";
+                    docPdf.setFontSize(8);
+                    docPdf.setTextColor(136, 101, 136);
+                    docPdf.text(str, 14, docPdf.internal.pageSize.height - 10);
+                }
+            });
+
+            docPdf.save(`Reporte_Inventario_Isabella.pdf`);
+        };
+
+        window.exportOrdersPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const docPdf = new jsPDF();
+
+            docPdf.setFont("helvetica", "bold");
+            docPdf.setFontSize(18);
+            docPdf.setTextColor(147, 51, 234);
+            docPdf.text("Boutique & Detalles Isabella", 14, 16);
+
+            docPdf.setFontSize(12);
+            docPdf.setTextColor(51, 24, 50);
+            docPdf.text("Reporte Detallado de Pedidos Registrados", 14, 22);
+
+            const now = new Date();
+            const fechaStr = now.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+            docPdf.setFont("helvetica", "normal");
+            docPdf.setFontSize(9);
+            docPdf.setTextColor(136, 101, 136);
+            docPdf.text(`Generado el ${fechaStr}`, 14, 27);
+
+            let totalRev = 0;
+            orders.forEach(o => totalRev += parseFloat(o.total || 0));
+
+            docPdf.setFillColor(255, 241, 242);
+            docPdf.roundedRect(14, 32, 55, 18, 3, 3, 'F');
+            docPdf.roundedRect(75, 32, 55, 18, 3, 3, 'F');
+            docPdf.roundedRect(136, 32, 60, 18, 3, 3, 'F');
+
+            docPdf.setFont("helvetica", "bold");
+            docPdf.setFontSize(7);
+            docPdf.setTextColor(136, 101, 136);
+            docPdf.text("TOTAL PEDIDOS", 18, 37);
+            docPdf.text("VENTAS TOTALES", 79, 37);
+            docPdf.text("ESTATUS", 140, 37);
+
+            docPdf.setFontSize(11);
+            docPdf.setTextColor(225, 29, 72);
+            docPdf.text(`${orders.length}`, 18, 44);
+            docPdf.setTextColor(16, 185, 129);
+            docPdf.text(`$${totalRev.toFixed(2)}`, 79, 44);
+            docPdf.setTextColor(147, 51, 234);
+            docPdf.text("Activos en Sistema", 140, 44);
+
+            let currentY = 58;
+
+            docPdf.setFont("helvetica", "bold");
+            docPdf.setFontSize(12);
+            docPdf.setTextColor(51, 24, 50);
+            docPdf.text("Lista de Pedidos y Detalles", 14, currentY);
+            currentY += 6;
+
+            orders.forEach((order) => {
+                if (currentY > 240) {
+                    docPdf.addPage();
+                    currentY = 20;
+                }
+
+                docPdf.setFont("helvetica", "bold");
+                docPdf.setFontSize(11);
+                docPdf.setTextColor(225, 29, 72);
+                docPdf.text(order.clientName || 'Cliente Anónimo', 14, currentY);
+
+                docPdf.setFontSize(9);
+                docPdf.setTextColor(16, 185, 129);
+                docPdf.text(`[ ${order.status || 'Pendiente'} ]`, 80, currentY);
+
+                docPdf.setFont("helvetica", "normal");
+                docPdf.setFontSize(8);
+                docPdf.setTextColor(136, 101, 136);
+                const orderIdShort = order.id ? order.id.slice(0, 6) : 'N/A';
+                docPdf.text(`Teléfono: ${order.clientPhone || 'N/A'}  |  ID: #ORD-${orderIdShort}`, 14, currentY + 5);
+                docPdf.text(`Fecha: ${order.createdAt || 'Reciente'}`, 130, currentY + 5);
+
+                currentY += 8;
+
+                const itemsData = (order.items || []).map(item => {
+                    const spec = item.shoeType === 'Rosas Eternas' ? `Dedicatoria: "${item.nota || ''}"` : `Talla: ${item.talla || 'N/A'}`;
+                    const pUnit = parseFloat(item.price || 0);
+                    const q = parseInt(item.qty || 1);
+                    return [
+                        item.name || '',
+                        item.shoeType || '',
+                        spec,
+                        `${q}`,
+                        `$${pUnit.toFixed(2)}`,
+                        `$${(pUnit * q).toFixed(2)}`
+                    ];
+                });
+
+                docPdf.autoTable({
+                    startY: currentY,
+                    head: [['Producto', 'Categoría', 'Especificación', 'Cant.', 'Precio U.', 'Subtotal']],
+                    body: itemsData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [147, 51, 234],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        fontSize: 8
+                    },
+                    styles: {
+                        fontSize: 8,
+                        cellPadding: 3,
+                        textColor: [51, 24, 50]
+                    },
+                    margin: { left: 14, right: 14 }
+                });
+
+                currentY = docPdf.lastAutoTable.finalY + 5;
+
+                docPdf.setFont("helvetica", "bold");
+                docPdf.setFontSize(10);
+                docPdf.setTextColor(190, 18, 60);
+                const totalOrd = parseFloat(order.total || 0).toFixed(2);
+                docPdf.text(`Total del Pedido: $${totalOrd} MXN`, 140, currentY);
+
+                currentY += 10;
+            });
+
+            const totalPages = docPdf.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPages; i++) {
+                docPdf.setPage(i);
+                docPdf.setFontSize(8);
+                docPdf.setFont("helvetica", "normal");
+                docPdf.setTextColor(136, 101, 136);
+                docPdf.text("Boutique & Detalles Isabella Panel Administrativo | Documento de uso interno", 14, docPdf.internal.pageSize.height - 10);
+            }
+
+            docPdf.save(`Reporte_Pedidos_Isabella.pdf`);
+        };
+
+        window.deleteOrder = async function(id) {
+            if (confirm("¿Eliminar este registro de pedido?")) {
+                await deleteDoc(doc(db, "pedidos", id));
+                window.showToast("🗑️ Pedido eliminado");
+            }
+        };
+
+        window.renderAdminProducts = function() {
+            document.getElementById('stock-count').innerText = products.length;
+            const container = document.getElementById('admin-products');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const query = document.getElementById('admin-search')?.value.toLowerCase() || '';
+
+            products.filter(p => p.name.toLowerCase().includes(query)).forEach(p => {
+                container.innerHTML += `
+                    <div class="product-card">
+                        <div class="img-wrapper"><img src="${p.image}"></div>
+                        <div class="product-info">
+                            <div class="product-title">${p.name}</div>
+                            <div>Precio: <b>$${p.price}</b></div>
+                            <div class="actions">
+                                <button class="btn-action btn-edit" onclick="window.startEditProduct('${p.id}')">✏️ Editar</button>
+                                <button class="btn-action btn-delete" onclick="window.deleteProduct('${p.id}')">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.startEditProduct = function(id) {
+            const prod = products.find(p => p.id === id);
+            document.getElementById('edit-id').value = prod.id;
+            document.getElementById('name').value = prod.name;
+            document.getElementById('shoeType').value = prod.shoeType;
+            document.getElementById('price').value = prod.price;
+            document.getElementById('oldPrice').value = prod.oldPrice || '';
+            document.getElementById('form-title').innerText = "✏️ Editar Producto";
+            document.getElementById('btn-cancel-edit').style.display = 'block';
+            document.getElementById('image').removeAttribute('required');
+        };
+
+        window.cancelEdit = function() {
+            document.getElementById('product-form').reset();
+            document.getElementById('edit-id').value = "";
+            document.getElementById('form-title').innerText = "Registrar Nuevo Producto";
+            document.getElementById('btn-cancel-edit').style.display = 'none';
+            document.getElementById('image').setAttribute('required', 'true');
+        };
+
+        window.deleteProduct = async function(id) {
+            if (confirm("¿Eliminar este producto?")) await deleteDoc(doc(db, "productos", id));
+        };
+
+        function convertImageToJpg(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 600;
+                        canvas.height = Math.round((img.height * 600) / img.width);
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.getElementById('product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('edit-id').value;
+            const fileInput = document.getElementById('image');
+
+            let imageData = null;
+            if (fileInput.files.length > 0) {
+                imageData = await convertImageToJpg(fileInput.files[0]);
+            }
+
+            const payload = {
+                name: document.getElementById('name').value,
+                shoeType: document.getElementById('shoeType').value,
+                specialTag: document.getElementById('specialTag').value,
+                price: parseFloat(document.getElementById('price').value).toFixed(2),
+                oldPrice: document.getElementById('oldPrice').value || null,
+            };
+
+            if (editId) {
+                if (imageData) payload.image = imageData;
+                await updateDoc(doc(db, "productos", editId), payload);
+                window.showToast("✏️ Producto actualizado");
+                window.cancelEdit();
+            } else {
+                if (!imageData) return window.showToast("⚠️ Selecciona una foto");
+                payload.image = imageData;
+                await addDoc(productsCol, payload);
+                window.showToast("🌸 Producto registrado");
+                document.getElementById('product-form').reset();
+            }
+        });
+
+        async function loadClosingDateSetting() {
+            const ref = doc(db, "config", "settings");
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                document.getElementById('closing-date-input').value = snap.data().closingDate;
+            } else {
+                document.getElementById('closing-date-input').value = "2026-12-31";
+            }
+        }
+
+        window.saveClosingDate = async function() {
+            const val = document.getElementById('closing-date-input').value;
+            if (val) {
+                await setDoc(doc(db, "config", "settings"), { closingDate: val });
+                window.showToast("📅 Fecha de cierre sincronizada");
+            }
+        };
+    </script>
+</body>
+</html>
