@@ -34,7 +34,7 @@
         .brand-title {
             color: #fff; font-size: 1.4rem; font-weight: 800;
             background: linear-gradient(45deg, #f472b6, #fb7185);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
         .cart-trigger {
@@ -207,7 +207,8 @@
             </div>
 
             <div class="cart-items-list" id="cart-items"></div>
-            
+            <button id="clear-cart-btn" onclick="clearCart()" style="display:none; border:none; background:none; cursor:pointer; color:var(--danger); font-size:0.8rem; font-weight:700; text-align:right; margin-top:4px;">🗑️ Vaciar carrito</button>
+
             <div style="margin-top:10px; background:#fff0f3; padding:12px; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
                 <div>
                     <label style="display:block; margin-bottom:3px;">👤 Nombre Completo:</label>
@@ -215,7 +216,7 @@
                 </div>
                 <div>
                     <label style="display:block; margin-bottom:3px;">📱 Teléfono (WhatsApp - 10 dígitos):</label>
-                    <input type="tel" id="client-phone" placeholder="Ej. 7441234567" required style="background:white;">
+                    <input type="tel" id="client-phone" placeholder="Ej. 7441234567" required maxlength="10" inputmode="numeric" pattern="[0-9]{10}" style="background:white;">
                 </div>
             </div>
 
@@ -361,11 +362,13 @@
             if (cart.length === 0) {
                 list.innerHTML = '<p style="text-align:center; padding:20px;">Tu carrito está vacío 🛒</p>';
                 document.getElementById('checkout-btn').style.display = 'none';
+                document.getElementById('clear-cart-btn').style.display = 'none';
                 document.getElementById('cart-total').innerText = 'Total: $0.00';
                 return;
             }
 
             document.getElementById('checkout-btn').style.display = 'block';
+            document.getElementById('clear-cart-btn').style.display = 'block';
 
             cart.forEach((item, index) => {
                 const sub = item.price * item.qty;
@@ -397,6 +400,12 @@
                 return;
             }
 
+            const phoneDigits = clientPhoneInput.replace(/\D/g, '');
+            if (phoneDigits.length !== 10) {
+                alert("El teléfono debe tener exactamente 10 dígitos (sin espacios ni letras). Ej. 7441234567");
+                return;
+            }
+
             let total = 0;
             let msg = `¡Hola Isabella! Mi nombre es *${clientNameInput}* y quisiera hacer el siguiente pedido:\n\n`;
 
@@ -411,7 +420,7 @@
 
             const orderPayload = {
                 clientName: clientNameInput,
-                clientPhone: clientPhoneInput,
+                clientPhone: phoneDigits,
                 items: cart,
                 total: total.toFixed(2),
                 status: 'Pendiente',
@@ -438,6 +447,17 @@
             localStorage.setItem('zapateria_cart_cloud', JSON.stringify(cart));
             updateCartBadge();
             renderCartModal();
+        };
+
+        window.clearCart = function() {
+            if (cart.length === 0) return;
+            if (confirm("¿Vaciar todo el carrito?")) {
+                cart = [];
+                localStorage.setItem('zapateria_cart_cloud', JSON.stringify(cart));
+                updateCartBadge();
+                renderCartModal();
+                showToast("🗑️ Carrito vaciado");
+            }
         };
 
         window.renderClientView = function() {
